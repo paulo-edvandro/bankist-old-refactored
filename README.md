@@ -17,7 +17,8 @@ Permite simular login, transferências, empréstimos e visualização de extrato
 3. Use uma das contas de exemplo para logar:  
    - Usuário: `js` | PIN: `1111`  
    - Usuário: `jd` | PIN: `2222`  
-
+4. Faça transferências, empréstimos, logue em outra conta e observe os movimentos!
+5. 
 ## 🔄 Evolução do Código
 Este projeto foi feito no início dos meus estudos em JS (começo de 2025).  
 Na época, usei nomes confusos e não seguia boas práticas.  
