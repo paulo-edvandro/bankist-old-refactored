@@ -1,11 +1,17 @@
 "use strict";
 
-const bankAccount1 = {
+// Data //
+// 1 200, 450, -400, 3000, -650, -130, 70, 1300
+// 2 5000, 3400, -150, -790, -3210, -1000, 8500, -30
+// 3 200, -200, 340, -300, -20, 50, 400, -460
+// 4 430, 1000, 700, 50, 90
+
+const account1 = {
   owner: "Jonas Schmedtmann",
   movements: [200, 455.23, -306.5, 25000, -642.21, -133.9, 79.97, 1300, 1220],
   interestRate: 1.2,
   pin: 1111,
-  movementDates: [
+  movementsDates: [
     "2019-11-18T21:31:17.178Z",
     "2019-12-23T07:42:02.383Z",
     "2020-01-28T09:15:04.904Z",
@@ -20,12 +26,12 @@ const bankAccount1 = {
   locale: "pt-PT",
 };
 
-const bankAccount2 = {
+const account2 = {
   owner: "Jessica Davis",
   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
   interestRate: 1.5,
   pin: 2222,
-  movementDates: [
+  movementsDates: [
     "2025-04-17T21:50:50.040Z",
     "2025-04-14T21:31:17.178Z",
     "2019-12-23T07:42:02.383Z",
@@ -39,57 +45,59 @@ const bankAccount2 = {
   locale: "en-US",
 };
 
-const accounts = [bankAccount1, bankAccount2];
+const accounts = [account1, account2];
 
-function addTransactionsToAccounts(accountsArray) {
-  accountsArray.forEach(account => {
-    account.transactions = [];
-    account.movements.forEach((transactionValue, transactionIndex) => {
-      account.transactions.push({
+function addTransactions(array) {
+  array.forEach(function (acc) {
+    acc.transactions = [];
+    acc.movements.forEach(function (mv, idx) {
+      acc.transactions.push({
         type: "movement",
-        value: transactionValue,
-        date: account.movementDates[transactionIndex],
+        value: mv,
+        date: acc.movementsDates[idx],
       });
     });
   });
 }
 
-addTransactionsToAccounts(accounts);
+addTransactions(accounts);
+console.log(account1);
 
 const msg = document.getElementById("mensagem");
-const welcomeLabel = document.querySelector(".welcome");
-const dateLabel = document.querySelector(".date");
-const balanceLabel = document.querySelector(".balance__value");
-const sumInLabel = document.querySelector(".summary__value--in");
-const sumOutLabel = document.querySelector(".summary__value--out");
-const sumInterestLabel = document.querySelector(".summary__value--interest");
-const timerLabel = document.querySelector(".timer");
-const appContainer = document.querySelector(".app");
-const movementsContainer = document.querySelector(".movements");
+const labelWelcome = document.querySelector(".welcome");
+const labelDate = document.querySelector(".date");
+const labelBalance = document.querySelector(".balance__value");
+const labelSumIn = document.querySelector(".summary__value--in");
+const labelSumOut = document.querySelector(".summary__value--out");
+const labelSumInterest = document.querySelector(".summary__value--interest");
+const labelTimer = document.querySelector(".timer");
+const generator = document.querySelector(".movements__type--deposit");
+const containerApp = document.querySelector(".app");
+const containerMovements = document.querySelector(".movements");
 
-const loanForm = document.querySelector(".form--loan");
-const transferForm = document.querySelector(".form--transfer");
-const loginButton = document.querySelector(".login__btn");
-const transferButton = document.querySelector(".form__btn--transfer");
-const loanButton = document.querySelector(".form__btn--loan");
-const closeButton = document.querySelector(".form__btn--close");
-const sortButton = document.querySelector(".btn--sort");
+const formLoan = document.querySelector(".form--loan");
+const formTransfer = document.querySelector(".form--transfer");
+const btnLogin = document.querySelector(".login__btn");
+const btnTransfer = document.querySelector(".form__btn--transfer");
+const btnLoan = document.querySelector(".form__btn--loan");
+const btnClose = document.querySelector(".form__btn--close");
+const btnSort = document.querySelector(".btn--sort");
 
-const closeForm = document.querySelector(".form--close");
+const formClose = document.querySelector(".form--close");
 
-const loginUsernameInput = document.querySelector(".login__input--user");
-const loginPinInput = document.querySelector(".login__input--pin");
-const transferToInput = document.querySelector(".form__input--to");
-const transferAmountInput = document.querySelector(".form__input--amount");
-const loanAmountInput = document.querySelector(".form__input--loan-amount");
-const closeUsernameInput = document.querySelector(".form__input--user");
-const closePinInput = document.querySelector(".form__input--pin");
-const loginForm = document.querySelector(".login");
+const inputLoginUsername = document.querySelector(".login__input--user");
+const inputLoginPin = document.querySelector(".login__input--pin");
+const inputTransferTo = document.querySelector(".form__input--to");
+const inputTransferAmount = document.querySelector(".form__input--amount");
+const inputLoanAmount = document.querySelector(".form__input--loan-amount");
+const inputCloseUsername = document.querySelector(".form__input--user");
+const inputClosePin = document.querySelector(".form__input--pin");
+const formLogin = document.querySelector(".login");
 
-movementsContainer.innerHTML = "";
+containerMovements.innerHTML = "";
 
-function formatDate(date, updateLabel = false) {
-  const formatted = new Intl.DateTimeFormat(navigator.language, {
+function formatDate(showLabel = true, date) {
+  const re = new Intl.DateTimeFormat(navigator.language, {
     hour: "2-digit",
     day: "2-digit",
     month: "long",
@@ -97,11 +105,10 @@ function formatDate(date, updateLabel = false) {
     year: "numeric",
     minute: "2-digit",
   }).format(date);
-  if (updateLabel) dateLabel.textContent = formatted;
-  return formatted;
+  return showLabel ? (labelDate.textContent = re) : re;
 }
 
-dateLabel.textContent = new Intl.DateTimeFormat(navigator.language, {
+labelDate.textContent = new Intl.DateTimeFormat(navigator.language, {
   hour: "2-digit",
   day: "2-digit",
   month: "2-digit",
@@ -109,181 +116,260 @@ dateLabel.textContent = new Intl.DateTimeFormat(navigator.language, {
   minute: "2-digit",
 }).format(new Date());
 
-function formatCurrency(value) {
+function formatCurrency(x) {
   return new Intl.NumberFormat(navigator.language, {
     style: "currency",
-    currency: currentAccount.currency,
-  }).format(value);
+    currency: foundAccount.currency,
+  }).format(x);
 }
 
-const renderMovements = function (transactions) {
-  movementsContainer.innerHTML = "";
-  transactions.forEach((t, i) => {
-    const typeLabel = t.type === "loan" ? "LOAN" : t.value < 0 ? "withdrawal" : "deposit";
-    const html = `
-      <div class="movements__row">
-        <div class="movements__type movements__type--${typeLabel}">${i + 1} ${typeLabel}</div>
-        <div class="movements__date">${formatDate(new Date(t.date))}</div>
-        <div class="movements__value">${formatCurrency(t.value)}</div>
-      </div>`;
-    movementsContainer.insertAdjacentHTML("afterbegin", html);
+const renderMovements = function (array) {
+  containerMovements.innerHTML = "";
+
+  array.forEach(function (tr, i) {
+    if (tr.type === "loan") {
+      const labelType = "LOAN";
+      const html = `<div class="movements__row">
+                <div class="movements__type movements__type--deposit">${i + 1} ${labelType}</div> 
+                <div class="movements__date">${formatDate(false, new Date(tr.date))}</div>
+                <div class="movements__value">${formatCurrency(tr.value)}</div>
+              </div>`;
+      containerMovements.insertAdjacentHTML("afterbegin", html);
+    } else {
+      const labelType = tr.value < 0 ? "withdrawal" : "deposit";
+      const html = `<div class="movements__row">
+                <div class="movements__type movements__type--${labelType}">${i + 1} ${labelType}</div>
+                <div class="movements__date">${formatDate(false, new Date(tr.date))}</div>
+                <div class="movements__value">${formatCurrency(tr.value)}</div>
+              </div>`;
+      containerMovements.insertAdjacentHTML("afterbegin", html);
+    }
   });
 };
 
 let timeOut;
 
-const startLogOutTimer = function () {
-  const LOGOUT_TIME = 60;
-  let seconds = LOGOUT_TIME;
+const startTimer = function () {
+  let seconds = 60;
   function tick() {
     const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const sec = String(seconds % 60).padStart(2, "0");
+    const seg = String(seconds % 60).padStart(2, "0");
     if (seconds === -1) {
       clearInterval(timeOut);
-      welcomeLabel.textContent = `Log in to get started`;
-      appContainer.style.opacity = "0";
+      labelWelcome.textContent = `Log in to get started`;
+      containerApp.style.opacity = "0";
     } else {
-      timerLabel.textContent = `${minutes}:${sec}`;
+      labelTimer.textContent = `${minutes}:${seg}`;
       seconds--;
     }
   }
+
   tick();
   timeOut = setInterval(tick, 1000);
 };
 
-const createUsername = user =>
-  user.toLowerCase().split(" ").map(a => a[0]).join("");
+const createUsername = function (user) {
+  const username = user
+    .toLowerCase()
+    .split(" ")
+    .map((a) => a[0])
+    .join("");
+  return username;
+};
 
-const addUser = accounts =>
-  accounts.forEach(acc => (acc.user = createUsername(acc.owner)));
+const addUser = function (ac) {
+  ac.forEach((v) => {
+    v.user = createUsername(v.owner);
+  });
+};
 
 addUser(accounts);
 
-const calcBalance = function (account) {
-  const balance = account.transactions.reduce((sum, t) => sum + t.value, 0);
-  balanceLabel.textContent = formatCurrency(balance);
-  return balance;
+const updateBalance = function (account) {
+  const n = account.transactions.reduce(function (c, v) {
+    return c + v.value;
+  }, 0);
+  return (labelBalance.textContent = formatCurrency(n));
 };
 
-const calcSummary = function (account) {
-  const incomes = account.transactions.filter(t => t.value > 0).reduce((sum, t) => sum + t.value, 0);
-  const out = Math.abs(account.transactions.filter(t => t.value < 0).reduce((sum, t) => sum + t.value, 0));
-  const interest = account.transactions
-    .filter(t => t.type !== "loan" && t.value > 0)
-    .map(t => (t.value * account.interestRate) / 100)
-    .filter(i => i >= 1)
-    .reduce((sum, i) => sum + i, 0)
+const updateSummary = function (account) {
+  const a = account.transactions
+    .filter((v) => v.value > 0)
+    .reduce((cn, v) => cn + v.value, 0);
+  const b = Math.abs(
+    account.transactions
+      .filter((v) => v.value < 0)
+      .reduce((cn, v) => cn + v.value, 0)
+  );
+  const c = account.transactions
+    .filter(function (v) {
+      return v.type !== "loan" && v.value > 0;
+    })
+    .map((v) => (v.value * account.interestRate) / 100)
+    .filter((v) => v >= 1)
+    .reduce((cn, v) => cn + v, 0)
     .toFixed(2);
-  sumInLabel.textContent = formatCurrency(incomes);
-  sumOutLabel.textContent = formatCurrency(out);
-  sumInterestLabel.textContent = formatCurrency(interest);
+
+  labelSumIn.textContent = formatCurrency(a);
+  labelSumOut.textContent = formatCurrency(b);
+  labelSumInterest.textContent = formatCurrency(c);
+
+  return account.transactions.reduce((cn, v) => {
+    cn + v.value;
+  }, 0);
 };
 
-const getBalance = account => account.transactions.reduce((sum, t) => sum + t.value, 0);
+const getBalance = function (account) {
+  return account.transactions.reduce((cn, v) => {
+    return cn + v.value;
+  }, 0);
+};
 
-let currentAccount;
 let foundAccount;
 let transferUser;
+let currentAccount;
 
-function findAccount(userInput, pinInput) {
-  foundAccount = accounts.find(acc => userInput.value === acc.user && acc.pin === +pinInput.value);
+function findAccount(x, y) {
+  foundAccount = accounts.find(function (v) {
+    return x.value === v.user && v.pin === +y.value;
+  });
   return foundAccount;
 }
 
-function findUser(userInput) {
-  transferUser = accounts.find(acc => userInput.value === acc.user);
+function findUser(x) {
+  transferUser = accounts.find(function (v) {
+    return x.value === v.user;
+  });
   return transferUser;
 }
 
-function clearInputs(...inputs) {
-  inputs.forEach(input => (input.value = ""));
-  inputs[inputs.length - 1].blur();
+function clearInputsBlur(x, y, z) {
+  x.value = "";
+  y.value = "";
+  z.blur();
 }
 
-function updateUI(account) {
+function updateAll(account) {
   renderMovements(account.transactions);
-  calcBalance(account);
-  calcSummary(account);
+  updateBalance(account);
+  updateSummary(account);
 }
 
-loginForm.addEventListener("submit", function (e) {
+formLogin.addEventListener("submit", function (e) {
   e.preventDefault();
-  findAccount(loginUsernameInput, loginPinInput);
+  findAccount(inputLoginUsername, inputLoginPin);
   if (foundAccount) {
-    welcomeLabel.textContent = `Welcome back ${foundAccount.owner.split(" ")[0]}`;
-    clearInputs(loginPinInput, loginUsernameInput, loginPinInput);
-    updateUI(foundAccount);
+    labelWelcome.textContent = `Welcome back ${foundAccount.owner.split(" ")[0]}`;
+    clearInputsBlur(inputLoginPin, inputLoginUsername, inputLoginPin);
+    updateAll(foundAccount);
     currentAccount = foundAccount;
+    console.log(document.querySelectorAll(".movements__type"));
     if (timeOut) clearInterval(timeOut);
-    appContainer.style.opacity = "1";
-    startLogOutTimer();
+    containerApp.style.opacity = "1";
+    startTimer();
   } else {
-    loginPinInput.value = "";
-    loginPinInput.blur();
+    inputLoginPin.value = "";
+    inputLoginPin.blur();
   }
 });
 
-transferForm.addEventListener("submit", function (e) {
+formTransfer.addEventListener("submit", function (e) {
   e.preventDefault();
-  findUser(transferToInput);
-  const balance = getBalance(foundAccount);
-  let amount = Number(transferAmountInput.value);
-  if (transferUser && transferUser !== foundAccount && amount > 0 && amount <= balance) {
+  findUser(inputTransferTo);
+  const re = getBalance(foundAccount);
+  let quantia = Number(inputTransferAmount.value);
+  if (
+    transferUser &&
+    transferUser !== foundAccount &&
+    quantia > 0 &&
+    quantia <= re
+  ) {
     if (timeOut) clearInterval(timeOut);
-    startLogOutTimer();
-    clearInputs(transferToInput, transferAmountInput, transferAmountInput);
-    transferUser.transactions.push({ type: "transfer", value: amount, date: new Date() });
-    foundAccount.transactions.push({ type: "transfer", value: -amount, date: new Date() });
-    updateUI(foundAccount);
+    startTimer();
+    clearInputsBlur(
+      inputTransferTo,
+      inputTransferAmount,
+      inputTransferAmount
+    );
+    transferUser.transactions.push({
+      type: "transfer",
+      value: quantia,
+      date: new Date(),
+    });
+    foundAccount.transactions.push({
+      type: "transfer",
+      value: -quantia,
+      date: new Date(),
+    });
+    updateAll(foundAccount);
   } else {
-    clearInputs(transferToInput, transferAmountInput, transferAmountInput);
+    clearInputsBlur(
+      inputTransferTo,
+      inputTransferAmount,
+      inputTransferAmount
+    );
     if (timeOut) clearInterval(timeOut);
-    startLogOutTimer();
+    startTimer();
   }
 });
 
-let processingLoan = false;
+let jk = false;
 
-loanForm.addEventListener("submit", function (e) {
+formLoan.addEventListener("submit", function (e) {
   e.preventDefault();
-  const loanValue = Math.floor(loanAmountInput.value);
-  const eligible = foundAccount.transactions.some(t => t.value >= 0.1 * loanValue && t.type !== "loan");
-  if (eligible && loanValue > 0) {
-    processingLoan = true;
+  const loanValue = Math.floor(inputLoanAmount.value);
+  const va = foundAccount.transactions.some(function (v) {
+    return v.value >= 0.1 * loanValue && v.type !== "loan";
+  });
+  if (va === true && loanValue > 0) {
+    jk = true;
+
     setTimeout(() => {
-      foundAccount.transactions.push({ type: "loan", value: loanValue, date: new Date() });
-      updateUI(foundAccount);
-      processingLoan = false;
+      foundAccount.transactions.push({
+        type: "loan",
+        value: loanValue,
+        date: new Date(),
+      });
+      updateAll(foundAccount);
+      jk = !jk;
     }, 3000);
-    loanAmountInput.value = "";
-    loanAmountInput.blur();
+
+    inputLoanAmount.value = "";
+    inputLoanAmount.blur();
     if (timeOut) clearInterval(timeOut);
-    startLogOutTimer();
+    startTimer();
   } else {
-    loanAmountInput.value = "";
-    loanAmountInput.blur();
+    inputLoanAmount.value = "";
+    inputLoanAmount.blur();
     if (timeOut) clearInterval(timeOut);
-    startLogOutTimer();
+    startTimer();
   }
 });
 
-closeForm.addEventListener("submit", function (e) {
+formClose.addEventListener("submit", function (e) {
   e.preventDefault();
-  findAccount(closeUsernameInput, closePinInput);
+  findAccount(inputCloseUsername, inputClosePin);
   if (foundAccount === currentAccount) {
-    const index = accounts.findIndex(acc => acc.user === currentAccount.user && acc.pin === currentAccount.pin);
+    const index = accounts.findIndex(
+      (v) => v.user === currentAccount.user && v.pin === currentAccount.pin
+    );
     accounts.splice(index, 1);
-    welcomeLabel.textContent = `Log in to get started`;
-    appContainer.style.opacity = "0";
+    labelWelcome.textContent = `Log in to get started`;
+    containerApp.style.opacity = "0";
   }
 });
 
 let sorted = true;
 
-sortButton.addEventListener("click", function () {
-  sortButton.blur();
+btnSort.addEventListener("click", function () {
+  btnSort.blur();
   sorted
-    ? renderMovements(foundAccount.transactions.slice().sort((a, b) => a.value - b.value))
+    ? renderMovements(
+        foundAccount.transactions.slice().sort(function (a, b) {
+          return a.value - b.value;
+        })
+      )
     : renderMovements(foundAccount.transactions);
   sorted = !sorted;
 });
+
