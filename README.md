@@ -3,6 +3,11 @@
 Aplicação de banco fictício construída em **JavaScript, HTML e CSS**.  
 Permite simular login, transferências, empréstimos e visualização de extratos.
 
+## Preview
+
+<img width="1363" height="723" alt="Captura de tela 2025-09-20 005000" src="https://github.com/user-attachments/assets/193937ce-aa6e-4d05-afcd-afcced8da653" />
+
+
 ## ✨ Funcionalidades
 - Login com usuário e PIN
 - Transferência entre contas
